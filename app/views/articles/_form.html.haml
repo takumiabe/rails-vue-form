@@ -1,17 +1,42 @@
-= form_with(model: article, local: true) do |form|
-  - if article.errors.any?
-    #error_explanation
-      %h2
-        = pluralize(article.errors.count, "error")
-        prohibited this article from being saved:
-      %ul
-        - article.errors.full_messages.each do |message|
-          %li= message
-  .field
-    = form.label :title
-    = form.text_field :title
-  .field
-    = form.label :body
-    = form.text_area :body
-  .actions
-    = form.submit
+- content_for :head do
+  = javascript_pack_tag 'form'
+
+-# もっと適切なデータに絞るべき。
+#form{ data: { init: @article.to_json(root: true, include: { comments: {} }) } }
+
+  = form_with(model: article, local: true) do |form|
+    - if article.errors.any?
+      #error_explanation
+        %h2
+          = pluralize(article.errors.count, "error")
+          prohibited this article from being saved:
+        %ul
+          - article.errors.full_messages.each do |message|
+            %li= message
+    .field
+      = form.label :title
+
+      -# input要素に "v-*", ":*", "@*" があるとnameが:nameに置換される(モンキーパッチの効果)
+      = form.text_field :title, 'v-model': 'article.title'
+    .field
+      = form.label :body
+      = form.text_area :body, 'v-model': 'article.body'
+
+    .fields{ 'v-for': '(comment, comment_index) in article.comments' }
+      -# [Comment.new]を渡しているのは、どのような状況でも1つ要素を出力させなければならないため。
+      -# child_indexはv-forのcomment_indexを参照している。順番が逆なのに注意。
+      -# wrapperを外すのはお好みで。
+      = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
+        .field
+          = comment_form.label :name
+          = comment_form.text_field :name, 'v-model': 'comment.name'
+        .field
+          = comment_form.label :body
+          = comment_form.text_area :body, 'v-model': 'comment.body'
+    = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "" })'
+
+    .actions
+      = form.submit
+
+  %pre
+    {{article}}
