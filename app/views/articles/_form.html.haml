@@ -28,9 +28,13 @@
 
     %draggable{ 'v-model': 'article.comments' }
       .fields{ 'v-for': '(comment, comment_index) in article.comments' }
-        -# [Comment.new]を渡しているのは、どのような状況でも1つ要素を出力させなければならないため。
-        -# child_indexはv-forのcomment_indexを参照している。順番が逆なのに注意。
-        -# wrapperを外すのはお好みで。
+        -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
+        -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
+        -# child_index: v-forのcomment_indexを参照している。(これが:nameの中に展開される)
+        -#              text_fieldなどによって、name="artcle[comments][0][title]"などと展開されるものが、
+        -#              :name="`artcle[comments][${comment_index}][title]`"と展開されることになる。
+        -#              (backquote-stringなのに注意！)
+        -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
         = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
           .field
             = comment_form.label :name
