@@ -71,7 +71,7 @@ class ArticlesController < ApplicationController
     def article_params
       params.require(:article).permit(
         :title, :body,
-        comments_attributes: [:id, :name, :body]
+        comments_attributes: [:id, :name, :body, :sort_key]
       )
     end
 end

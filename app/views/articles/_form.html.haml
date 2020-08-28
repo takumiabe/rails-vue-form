@@ -1,6 +1,10 @@
 - content_for :head do
   = javascript_pack_tag 'form'
 
+
+:css
+  .sortable-ghost { opacity: 0.1; }
+
 -# もっと適切なデータに絞るべき。
 #form{ data: { init: @article.to_json(root: true, include: { comments: {} }) } }
 
@@ -22,17 +26,19 @@
       = form.label :body
       = form.text_area :body, 'v-model': 'article.body'
 
-    .fields{ 'v-for': '(comment, comment_index) in article.comments' }
-      -# [Comment.new]を渡しているのは、どのような状況でも1つ要素を出力させなければならないため。
-      -# child_indexはv-forのcomment_indexを参照している。順番が逆なのに注意。
-      -# wrapperを外すのはお好みで。
-      = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
-        .field
-          = comment_form.label :name
-          = comment_form.text_field :name, 'v-model': 'comment.name'
-        .field
-          = comment_form.label :body
-          = comment_form.text_area :body, 'v-model': 'comment.body'
+    %draggable{ 'v-model': 'article.comments' }
+      .fields{ 'v-for': '(comment, comment_index) in article.comments' }
+        -# [Comment.new]を渡しているのは、どのような状況でも1つ要素を出力させなければならないため。
+        -# child_indexはv-forのcomment_indexを参照している。順番が逆なのに注意。
+        -# wrapperを外すのはお好みで。
+        = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
+          .field
+            = comment_form.label :name
+            = comment_form.text_field :name, 'v-model': 'comment.name'
+          .field
+            = comment_form.label :body
+            = comment_form.text_area :body, 'v-model': 'comment.body'
+          = comment_form.text_field :sort_key, ':value': 'comment_index+1'
     = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "" })'
 
     .actions

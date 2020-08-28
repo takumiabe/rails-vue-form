@@ -1,8 +1,10 @@
 import Vue from '@vue'
+import draggable from 'vuedraggable'
 
 document.addEventListener('DOMContentLoaded', () => {
   let form = new Vue({
     el: '#form',
+    components: { draggable },
     data() {
       return { article: { comments: [] } }
     }
