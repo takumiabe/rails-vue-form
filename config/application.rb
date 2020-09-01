@@ -27,7 +27,8 @@ module RailsVueForm
     # -- all .rb files in that directory are automatically loaded after loading
     # the framework and any gems in your application.
 
-    config.paths.add Rails.root.join('app', 'lib', 'patch').to_s, eager_load: true
+    config.paths.add Rails.root.join('app', 'lib', 'patch').to_s, autoload: true
+    config.autoload_paths << Rails.root.join('app', 'lib', 'patch').to_s
 
     # Don't generate system test files.
     config.generators.system_tests = nil

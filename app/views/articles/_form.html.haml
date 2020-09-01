@@ -1,52 +1,76 @@
 - content_for :head do
   = javascript_pack_tag 'form'
 
+:ruby
+  # Vue.jsのdataの初期化用にjsonをstringifyして与える。本来はviewにベタ書きしなほうが良いかもしれない。
+  initialData = @article.to_json(root: true, include: { comments: {} })
 
 :css
   .sortable-ghost { opacity: 0.1; }
 
--# もっと適切なデータに絞るべき。
-#form{ data: { init: @article.to_json(root: true, include: { comments: {} }) } }
+-# Railsのname生成がほしいがために、悲しいかな、コイツはHAMLで書かざるを得ない。
+-# あくまで、「RailsのFormを活かす前提で無理やりvue.jsで動的にしてみた」という前後関係である。
+-# el: #formなので、これがvueコンポーネントのtemplate
+= form_with(model: article, local: true, id: 'form', data: { init: initialData }) do |form|
+  - if article.errors.any?
+    #error_explanation
+      %h2
+        = pluralize(article.errors.count, "error")
+        prohibited this article from being saved:
+      %ul
+        - article.errors.full_messages.each do |message|
+          %li= message
+  .field
+    -# nested formを使わなければ、特別な手段を用いなくてもv-modelとかは動く。v-bindは動く。
+    = form.label :title
+    = form.text_field :title, 'v-model': 'article.title', ':style': '{ backgroundColor: article.title ? "" : "#fcc" }'
 
-  = form_with(model: article, local: true) do |form|
-    - if article.errors.any?
-      #error_explanation
-        %h2
-          = pluralize(article.errors.count, "error")
-          prohibited this article from being saved:
-        %ul
-          - article.errors.full_messages.each do |message|
-            %li= message
-    .field
-      = form.label :title
+  .field
+    = form.label :body
+    = form.text_area :body, 'v-model': 'article.body'
 
-      -# input要素に "v-*", ":*", "@*" があるとnameが:nameに置換される(モンキーパッチの効果)
-      = form.text_field :title, 'v-model': 'article.title'
-    .field
-      = form.label :body
-      = form.text_area :body, 'v-model': 'article.body'
+  -# 普通の Vue-Component
+  %draggable{ 'v-model': 'article.comments' }
 
-    %draggable{ 'v-model': 'article.comments' }
-      .fields{ 'v-for': '(comment, comment_index) in article.comments' }
-        -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
-        -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
-        -# child_index: v-forのcomment_indexを参照している。(これが:nameの中に展開される)
-        -#              text_fieldなどによって、name="artcle[comments][0][title]"などと展開されるものが、
-        -#              :name="`artcle[comments][${comment_index}][title]`"と展開されることになる。
-        -#              (backquote-stringなのに注意！)
-        -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
-        = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
-          .field
-            = comment_form.label :name
-            = comment_form.text_field :name, 'v-model': 'comment.name'
-          .field
-            = comment_form.label :body
-            = comment_form.text_area :body, 'v-model': 'comment.body'
-          = comment_form.text_field :sort_key, ':value': 'comment_index+1'
-    = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "" })'
+    -# 普通の v-for 表記 + v-bind表記
+    .fields{ 'v-for': '(comment, comment_index) in article.comments' }
 
-    .actions
-      = form.submit
+      -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
+      -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
+      -# child_index: コレ自体はRailsの機能だが、コイツを利用して、各input要素が v-for の comment_index を参照するようにセットアップする
+      -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
+      = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
+
+        .field
+          -# vue: Railsが内部で自動出力するカラムを、出力の最終段直前でv-bindに置換することで、vue.jsから扱えるようにする。
+          -#      具体的には、key="value" を v-bind:key="`value`"に置き換える。
+          -#      backquote-stringなのに注意。すなわちvalueに${x}記法が含まれていればvue.js側で評価される。
+          -#      fields_forのindex指定によって、for="article[comments_attributes][${comment_index}][name]"が入っているので、
+          -#      これが置換されて、v-bind:for="`article[comments_attributes][${comment_index}][name]`" となる。(backquote-stringであるのに注意！)
+          = comment_form.label :name, vue: :for
+          -#      ↑ ちなみに、forとidは一致していないといけない。故に、labelにはvue: :for を input等にはvue: :idを指定することになる
+          -#      (labelでinputを包むときはどちらでも良い)
+
+          -# vue: nameを含むことで、Railsが受け取るparamsに${content_index}を紛れ込ませ、Vuejsの力で動的に展開する
+          = comment_form.text_field :name, vue: %i[id name], 'v-model': 'comment.name'
+
+        .field
+          -# 多分 Railsが自動生成するような対象はid / name / value / forだけでしょ？という予断から、vue: trueを渡すとこれらを一括して対象にすることができるようにした。
+          -# もしかしたらいまいちかもしれない。
+          = comment_form.label :body, vue: true
+
+          -# vue: だからRailsのメカニズムを利用しないオプション(この例ではstyle)であれば、単に ':style'とすれば良い。
+          -#      問題となるのは、概ね id / name / value / for だけだろう。
+          = comment_form.text_area :body, vue: true, 'v-model': 'comment.body'
+
+        .filed
+          = comment_form.label :sort_key, vue: true
+          = comment_form.text_field :sort_key, vue: true, ':value': 'comment_index+1'
+
+  = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "" })'
+
+  .actions
+    = form.submit
 
   %pre
     {{article}}
