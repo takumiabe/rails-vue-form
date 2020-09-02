@@ -3,7 +3,16 @@
 
 :ruby
   # Vue.jsのdataの初期化用にjsonをstringifyして与える。本来はviewにベタ書きしなほうが良いかもしれない。
-  initialData = @article.as_json(root: true, include: { comments: { methods: %i[_destroy] } })
+  initialData = @article.as_json(
+    root: true,
+    except: %i[created_at updated_at],
+    include: {
+      comments: {
+        except: %i[created_at updated_at],
+        methods: %i[_destroy]
+      }
+    }
+  )
   initialData['article']['comments'].sort_by!{|c| c['sort_key'] }
   initialData = initialData.to_json
 
