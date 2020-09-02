@@ -8,77 +8,82 @@
   initialData = initialData.to_json
 
 :css
+  .comment { border: 1px solid gray; }
   .sortable-ghost { opacity: 0.1; }
+  .sortable-drag { border: 3px solid red !important; opacity: 1; }
 
--# Railsのname生成がほしいがために、悲しいかな、コイツはHAMLで書かざるを得ない。
--# あくまで、「RailsのFormを活かす前提で無理やりvue.jsで動的にしてみた」という前後関係である。
 -# el: #formなので、これがvueコンポーネントのtemplate
-= form_with(model: article, local: true, id: 'form', data: { init: initialData }) do |form|
-  - if article.errors.any?
-    #error_explanation
-      %h2
-        = pluralize(article.errors.count, "error")
-        prohibited this article from being saved:
-      %ul
-        - article.errors.full_messages.each do |message|
-          %li= message
-  .field
-    -# nested formを使わなければ、特別な手段を用いなくてもv-modelとかは動く。v-bindは動く。
-    = form.label :title
-    = form.text_field :title, 'v-model': 'article.title', ':style': '{ backgroundColor: article.title ? "" : "#fcc" }'
+#form{ data: { init: initialData }, style: 'display: flex; flex-flow: row ;' }
+  -# Railsのname生成がほしいがために、悲しいかな、コイツはHAMLで書かざるを得ない。
+  -# あくまで、「RailsのFormを活かす前提で無理やりvue.jsで動的にしてみた」という前後関係である。
+  = form_with(model: article, local: true, html: { style: 'width: 40%;' }) do |form|
+    - if article.errors.any?
+      #error_explanation
+        %h2
+          = pluralize(article.errors.count, "error")
+          prohibited this article from being saved:
+        %ul
+          - article.errors.full_messages.each do |message|
+            %li= message
+    .field
+      -# nested formを使わなければ、特別な手段を用いなくてもv-modelとかは動く。v-bindは動く。
+      = form.label :title
+      = form.text_field :title, 'v-model': 'article.title', ':style': '{ backgroundColor: article.title ? "" : "#fcc" }'
 
-  .field
-    = form.label :body
-    = form.text_area :body, 'v-model': 'article.body'
+    .field
+      = form.label :body
+      = form.text_area :body, 'v-model': 'article.body'
 
-  -# 普通の Vue-Component
-  %draggable{ 'v-model': 'article.comments' }
+    -# 普通の Vue-Component
+    %draggable{ 'v-model': 'article.comments' }
 
-    -# 普通の v-for 表記 + v-bind表記
-    .fields{ 'v-for': '(comment, comment_index) in article.comments', 'v-show': '!comment._destroy' }
+      -# 普通の v-for 表記 + v-bind表記
+      .comment.fields{ 'v-for': '(comment, comment_index) in article.comments', 'v-show': '!comment._destroy' }
 
-      -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
-      -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
-      -# child_index: コレ自体はRailsの機能だが、コイツを利用して、各input要素が v-for の comment_index を参照するようにセットアップする
-      -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
-      = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
+        -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
+        -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
+        -# child_index: コレ自体はRailsの機能だが、コイツを利用して、各input要素が v-for の comment_index を参照するようにセットアップする
+        -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
+        = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
 
-        .field
-          -# vue: Railsが内部で自動出力するカラムを、出力の最終段直前でv-bindに置換することで、vue.jsから扱えるようにする。
-          -#      具体的には、key="value" を v-bind:key="`value`"に置き換える。
-          -#      backquote-stringなのに注意。すなわちvalueに${x}記法が含まれていればvue.js側で評価される。
-          -#      fields_forのindex指定によって、for="article[comments_attributes][${comment_index}][name]"が入っているので、
-          -#      これが置換されて、v-bind:for="`article[comments_attributes][${comment_index}][name]`" となる。(backquote-stringであるのに注意！)
-          = comment_form.label :name, vue: :for
-          -#      ↑ ちなみに、forとidは一致していないといけない。故に、labelにはvue: :for を input等にはvue: :idを指定することになる
-          -#      (labelでinputを包むときはどちらでも良い)
+          .field
+            -# vue: Railsが内部で自動出力するカラムを、出力の最終段直前でv-bindに置換することで、vue.jsから扱えるようにする。
+            -#      具体的には、key="value" を v-bind:key="`value`"に置き換える。
+            -#      backquote-stringなのに注意。すなわちvalueに${x}記法が含まれていればvue.js側で評価される。
+            -#      fields_forのindex指定によって、for="article[comments_attributes][${comment_index}][name]"が入っているので、
+            -#      これが置換されて、v-bind:for="`article[comments_attributes][${comment_index}][name]`" となる。(backquote-stringであるのに注意！)
+            = comment_form.label :name, vue: :for
+            -#      ↑ ちなみに、forとidは一致していないといけない。故に、labelにはvue: :for を input等にはvue: :idを指定することになる
+            -#      (labelでinputを包むときはどちらでも良い)
 
-          -# vue: nameを含むことで、Railsが受け取るparamsに${content_index}を紛れ込ませ、Vuejsの力で動的に展開する
-          = comment_form.text_field :name, vue: %i[id name], 'v-model': 'comment.name'
+            -# vue: nameを含むことで、Railsが受け取るparamsに${content_index}を紛れ込ませ、Vuejsの力で動的に展開する
+            = comment_form.text_field :name, vue: %i[id name], 'v-model': 'comment.name'
 
-        .field
-          -# 多分 Railsが自動生成するような対象はid / name / value / forだけでしょ？という予断から、vue: trueを渡すとこれらを一括して対象にすることができるようにした。
-          -# もしかしたらいまいちかもしれない。
-          = comment_form.label :body, vue: true
+          .field
+            -# 多分 Railsが自動生成するような対象はid / name / value / forだけでしょ？という予断から、vue: trueを渡すとこれらを一括して対象にすることができるようにした。
+            -# もしかしたらいまいちかもしれない。
+            = comment_form.label :body, vue: true
 
-          -# vue: だからRailsのメカニズムを利用しないオプション(この例ではstyle)であれば、単に ':style'とすれば良い。
-          -#      問題となるのは、概ね id / name / value / for だけだろう。
-          = comment_form.text_area :body, vue: true, 'v-model': 'comment.body'
+            -# vue: だからRailsのメカニズムを利用しないオプション(この例ではstyle)であれば、単に ':style'とすれば良い。
+            -#      問題となるのは、概ね id / name / value / for だけだろう。
+            = comment_form.text_area :body, vue: true, 'v-model': 'comment.body'
 
-        .filed
-          = comment_form.label :sort_key, vue: true
-          = comment_form.text_field :sort_key, vue: true, ':value': 'comment_index+1'
+          .filed
+            = comment_form.label :sort_key, vue: true
+            = comment_form.text_field :sort_key, vue: true, ':value': 'comment_index+1'
 
-        .field
-          -# allow_destroy: trueを動かすためのいつもの組み合わせ。
-          = comment_form.hidden_field :id, vue: %i[id name], 'v-model': 'comment.id'
-          = comment_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'comment._destroy'
-          = button_tag '削除', type: :button, '@click': '$set(comment, "_destroy", 1)'
+          .field
+            -# allow_destroy: trueを動かすためのいつもの組み合わせ。
+            = comment_form.hidden_field :id, vue: %i[id name], 'v-model': 'comment.id'
+            = comment_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'comment._destroy'
 
-  = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "", _destroy: null })'
+            -# Railsが自動生成する値を使わないなら、vue:の指定は不要
+            = button_tag '削除', type: :button, '@click': '$set(comment, "_destroy", 1)'
 
-  .actions
-    = form.submit
+    = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "", _destroy: null })'
 
-  %pre
+    .actions
+      = form.submit
+
+  %pre{ style: 'width: 40%;'}
     {{article}}
