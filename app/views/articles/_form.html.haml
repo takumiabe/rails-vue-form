@@ -3,8 +3,9 @@
 
 :ruby
   # Vue.jsのdataの初期化用にjsonをstringifyして与える。本来はviewにベタ書きしなほうが良いかもしれない。
-  initialData = @article.to_json(root: true, include: { comments: {} })
+  initialData = @article.as_json(root: true, include: { comments: { methods: %i[_destroy] } })
   initialData['article']['comments'].sort_by!{|c| c['sort_key'] }
+  initialData = initialData.to_json
 
 :css
   .sortable-ghost { opacity: 0.1; }
@@ -34,7 +35,7 @@
   %draggable{ 'v-model': 'article.comments' }
 
     -# 普通の v-for 表記 + v-bind表記
-    .fields{ 'v-for': '(comment, comment_index) in article.comments' }
+    .fields{ 'v-for': '(comment, comment_index) in article.comments', 'v-show': '!comment._destroy' }
 
       -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
       -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
@@ -68,7 +69,13 @@
           = comment_form.label :sort_key, vue: true
           = comment_form.text_field :sort_key, vue: true, ':value': 'comment_index+1'
 
-  = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "" })'
+        .field
+          -# allow_destroy: trueを動かすためのいつもの組み合わせ。
+          = comment_form.hidden_field :id, vue: %i[id name], 'v-model': 'comment.id'
+          = comment_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'comment._destroy'
+          = button_tag '削除', type: :button, '@click': '$set(comment, "_destroy", 1)'
+
+  = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "", _destroy: null })'
 
   .actions
     = form.submit
