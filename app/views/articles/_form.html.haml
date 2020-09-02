@@ -35,7 +35,7 @@
       = form.text_area :body, 'v-model': 'article.body'
 
     -# 普通の Vue-Component
-    %draggable{ 'v-model': 'article.comments' }
+    %draggable{ 'v-model': 'article.comments', '@end': 'updateSortKey' }
 
       -# 普通の v-for 表記 + v-bind表記
       .comment.fields{ 'v-for': '(comment, comment_index) in article.comments', 'v-show': '!comment._destroy' }
@@ -70,7 +70,7 @@
 
           .filed
             = comment_form.label :sort_key, vue: true
-            = comment_form.text_field :sort_key, vue: true, ':value': 'comment_index+1'
+            = comment_form.text_field :sort_key, vue: true, ':value': 'comment.sort_key'
 
           .field
             -# allow_destroy: trueを動かすためのいつもの組み合わせ。
@@ -78,9 +78,9 @@
             = comment_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'comment._destroy'
 
             -# Railsが自動生成する値を使わないなら、vue:の指定は不要
-            = button_tag '削除', type: :button, '@click': '$set(comment, "_destroy", 1)'
+            = button_tag '削除', type: :button, '@click': 'delComment(comment)'
 
-    = button_tag 'add comment', type: 'button', '@click': 'article.comments.push({ name: "", body: "", _destroy: null })'
+    = button_tag 'add comment', type: 'button', '@click': 'addComment'
 
     .actions
       = form.submit
