@@ -9,11 +9,28 @@
     include: {
       comments: {
         except: %i[created_at updated_at],
-        methods: %i[_destroy]
+        methods: %i[_destroy],
+        include: {
+          images_attachments: {
+            only: %i[id],
+            methods: %i[_destroy],
+            include: {
+              blob: {
+                only: %i[signed_id],
+                methods: %i[signed_id]
+              }
+            }
+          },
+        }
       }
     }
   )
   initialData['article']['comments'].sort_by!{|c| c['sort_key'] }
+  initialData['article']['comments'].each do |comm|
+    comm['images_attachments']&.each do |img|
+      img.merge!(img.delete('blob')) if img['blob']
+    end
+  end
   initialData = initialData.to_json
 
 :css
@@ -91,6 +108,26 @@
 
           .filed
             = comment_form.file_field :images, multiple: true, vue: %i[id name]
+
+            %ul{ style: 'display: flex; flex-flow: raw' }
+              = comment_form.fields_for :images_attachments, [ActiveStorage::Attachment.new], child_index: '${attachment_index}', wrapper: false do |image_form|
+                %li{ 'v-for': "(attachment, attachment_index) in comment.images_attachments", ':key': "attachment_index",
+                  style: 'display: flex-item; list-style: none;'}
+                  %img{ width: '100px', ':src': rails_service_blob_path(signed_id: 'XXXXXXXX', filename: 'abc').gsub('XXXXXXXX', '${attachment.signed_id}').yield_self{|x| "\`#{x}\`"} }
+                  %br
+
+                  %template{ 'v-if': "attachment.id" }
+                    = image_form.hidden_field :id, vue: %i[id name], 'v-model': 'attachment.id'
+                    %label
+                      -# 第4引数をnilにすることで、railsのcheckbox hack用のhidden_tagが出力されるのを止める
+                      = image_form.check_box :_destroy, { vue: %i[id name value], 'v-model': 'attachment._destroy' }, 1, nil
+                      消す
+                    -# その上でvueらしい感じにしつつ、Railsが扱う値である1 / 0を明示的に送る
+                    = image_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'attachment._destroy ? 1 : 0'
+                  %template{ 'v-else': true }
+                    -# direct-uploadを使えば、errorsが起きた時にimageが削除されることを防げるため、else節を導入して表示してやるといい感じ。
+                    = comment_form.hidden_field :images, value: nil, multiple: true, vue: %i[id name value], ':value': 'attachment.signed_id'
+                    %button{ type: :button, '@click': 'comment.images_attachments.splice(attachment_index, 1)' } アップロードをやめる
 
     = button_tag 'add comment', type: 'button', '@click': 'addComment'
 

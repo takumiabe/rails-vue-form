@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     methods: {
       addComment() {
         this.article.comments.push(
-          { name: "", body: "", sort_key: 1, _destroy: null }
+          { name: "", body: "", sort_key: 1, _destroy: null, images_attachments: [] }
         );
         this.updateSortKey();
       },
