@@ -1,10 +1,11 @@
 import Vue from '@vue'
 import draggable from 'vuedraggable'
+import directUpload from '../src/direct_upload.vue'
 
 document.addEventListener('DOMContentLoaded', () => {
   let form = new Vue({
     el: '#form',
-    components: { draggable },
+    components: { draggable, directUpload },
     data() {
       return { article: { comments: [] } }
     },

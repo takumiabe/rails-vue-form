@@ -107,7 +107,12 @@
             = button_tag '削除', type: :button, '@click': 'delComment(comment)'
 
           .filed
-            = comment_form.file_field :images, multiple: true, vue: %i[id name]
+            %direct-upload{ 'upload-url': rails_direct_uploads_url,
+                            ':attachments': 'comment.images_attachments',
+                            '@upload': 'comment.images_attachments.push({ signed_id: $event.blob.signed_id })',
+                            '@fail': '$set(comment, "hoge", $event)',
+                             }
+              %button{ type: :button } 新規画像
 
             %ul{ style: 'display: flex; flex-flow: raw' }
               = comment_form.fields_for :images_attachments, [ActiveStorage::Attachment.new], child_index: '${attachment_index}', wrapper: false do |image_form|
