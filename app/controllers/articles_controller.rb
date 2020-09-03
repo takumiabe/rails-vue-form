@@ -71,7 +71,13 @@ class ArticlesController < ApplicationController
     def article_params
       params.require(:article).permit(
         :title, :body,
-        comments_attributes: [:id, :name, :body, :sort_key, :_destroy]
+        comments_attributes: [
+          :id, :name, :body, :sort_key, :_destroy,
+          images: [],
+          images_attachments_attributes: [
+            :id, :_destroy
+          ],
+        ]
       )
     end
 end

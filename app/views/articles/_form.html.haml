@@ -89,6 +89,9 @@
             -# Railsが自動生成する値を使わないなら、vue:の指定は不要
             = button_tag '削除', type: :button, '@click': 'delComment(comment)'
 
+          .filed
+            = comment_form.file_field :images, multiple: true, vue: %i[id name]
+
     = button_tag 'add comment', type: 'button', '@click': 'addComment'
 
     .actions
