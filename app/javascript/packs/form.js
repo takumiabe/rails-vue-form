@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el: '#form',
     components: { draggable, directUpload },
     data() {
-      return { article: { comments: [] } }
+      return { article: { tag_ids: [], comments: [] } }
     },
     methods: {
       addComment() {

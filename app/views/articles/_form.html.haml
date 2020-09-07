@@ -5,6 +5,7 @@
   # Vue.jsのdataの初期化用にjsonをstringifyして与える。本来はviewにベタ書きしなほうが良いかもしれない。
   initialData = @article.as_json(
     root: true,
+    methods: %i[tag_ids],
     except: %i[created_at updated_at],
     include: {
       comments: {
@@ -59,6 +60,13 @@
     .field
       = form.label :body
       = form.text_area :body, 'v-model': 'article.body'
+
+    .field
+      %ul
+        = form.collection_check_boxes :tag_ids, Tag.all, :id, :name, include_hidden: false do |b|
+          %li
+            = b.check_box vue: true, 'v-model': 'article.tag_ids'
+            = b.label vue: true
 
     .field
       = form.label :visibility
