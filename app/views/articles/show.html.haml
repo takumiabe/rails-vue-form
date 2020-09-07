@@ -11,6 +11,8 @@
   %ul
     - @article.comments.each do |comment|
       %li
+        - if comment.visibility.secret?
+          secret:
         %strong #{comment.name} say:
         = comment.body
 

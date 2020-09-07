@@ -101,6 +101,14 @@
             -# vue: だからRailsのメカニズムを利用しないオプション(この例ではstyle)であれば、単に ':style'とすれば良い。
             -#      問題となるのは、概ね id / name / value / for だけだろう。
             = comment_form.text_area :body, vue: true, 'v-model': 'comment.body'
+          -# nestedな状態でのradio_button
+          .field
+            = comment_form.label :visibility, vue: true
+            -# include_hidden: falseにしておかないと、そちらで生成されたinputにはvue: オプションが無いためうまく動かない
+            = comment_form.collection_radio_buttons :visibility, Comment.visibility.options, :last, :first, include_hidden: false do |b|
+              = b.radio_button vue: true, 'v-model': 'comment.visibility'
+              -# forとidの対応がつく。
+              = b.label vue: true
 
           .filed
             = comment_form.label :sort_key, vue: true

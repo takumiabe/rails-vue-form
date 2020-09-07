@@ -72,7 +72,7 @@ class ArticlesController < ApplicationController
       params.require(:article).permit(
         :title, :body, :visibility,
         comments_attributes: [
-          :id, :name, :body, :sort_key, :_destroy,
+          :id, :name, :body, :visibility, :sort_key, :_destroy,
           images: [],
           images_attachments_attributes: [
             :id, :_destroy
