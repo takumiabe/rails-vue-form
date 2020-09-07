@@ -60,6 +60,14 @@
       = form.label :body
       = form.text_area :body, 'v-model': 'article.body'
 
+    .field
+      = form.label :visibility
+      = form.collection_radio_buttons :visibility, Article.visibility.options, :last, :first do |b|
+        = b.label do
+          -# collection_radio_buttonsで生成されるinput要素にhtmlオプションを与えるならこうするしかない。(vuejs関係なく)
+          = b.radio_button 'v-model': 'article.visibility'
+          = b.text
+
     -# 普通の Vue-Component
     %draggable{ 'v-model': 'article.comments', '@end': 'updateSortKey' }
 

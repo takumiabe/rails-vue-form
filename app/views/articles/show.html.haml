@@ -2,6 +2,9 @@
 %section
   %h2= @article.title
   = simple_format @article.body
+  %dl
+    %dt #{Article.human_attribute_name :visibility}:
+    %dd= @article.visibility.text
 
 %section
   %h3 comments
