@@ -1,4 +1,4 @@
-# ActionView::Helpers::Tags::Base.prepend FormBuilderWithVueJS
+ActionView::Helpers::Tags::Base.prepend FormBuilderWithVueJs
 
 ActiveModel::Errors.prepend ActiveModelErrorWithAsJson
 

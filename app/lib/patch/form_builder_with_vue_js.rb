@@ -1,14 +1,29 @@
-module FormBuilderWithVueJS
-  VUE_ATTR_REGEX = /^(v-|:|@)/
+require_dependency 'vue_option'
 
-  # patch for ActionView::Helpers::Tags::Base
-  # enable by `ActionView::Helpers::Tags::Base.prepend FormBuilderWithVueJS`
+module FormBuilderWithVueJs
+  def sanitized_object_name
+    super if !@vue_opt || !(@vue_opt.has?(:id) || @vue_opt.has?(:for))
+
+    @sanitized_object_name ||=
+      begin
+        # "aaa[bbb][ccc]" => ["aaa", "[bbb]", "[ccc]"]
+        list = @object_name.scan(/[-a-zA-Z0-9:._]+|\[[^\[\]]*\]/)
+        list.map! do |section|
+          if section.starts_with?('[${') && section.ends_with?('}]')
+            "_#{section[1..-2]}_"
+          else
+            section.gsub(/\]\[|[^-a-zA-Z0-9:.]/, "_")
+          end
+        end
+        list.join.sub(/_$/, "")
+      end
+  end
+
   def add_default_name_and_id(options)
-    super
-
-    # vue.jsっぽい痕跡があれば :name属性を `string` の形に置換する
-    if options.keys.any? {|k| k.to_s.match? VUE_ATTR_REGEX }
-      options[':name'] = "\`#{options.delete('name')}\`"
+    if options['vue'].present?
+      @vue_opt = ::VueOption.new(options)
     end
+
+    super
   end
 end
