@@ -5,7 +5,6 @@
   # Vue.jsのdataの初期化用にjsonをstringifyして与える。本来はviewにベタ書きしなほうが良いかもしれない。
   initialData = @article.as_json(
     root: true,
-    methods: %i[tag_ids],
     except: %i[created_at updated_at],
     include: {
       comments: {
@@ -23,6 +22,11 @@
             }
           },
         }
+      },
+      taggings: {
+        except: %i[created_at updated_at],
+        only: %i[id tag_id],
+        methods: %i[_destroy],
       }
     }
   )
@@ -32,6 +36,7 @@
       img.merge!(img.delete('blob')) if img['blob']
     end
   end
+  initialData['allTags'] = Tag.all.as_json(only: %i[id name])
   initialData = initialData.to_json
 
 :css
@@ -65,8 +70,26 @@
       %ul
         = form.collection_check_boxes :tag_ids, Tag.all, :id, :name, include_hidden: false do |b|
           %li
-            = b.check_box vue: true, 'v-model': 'article.tag_ids'
+            = b.check_box vue: true, 'v-model': 'tag_ids'
             = b.label vue: true
+
+    .field
+      %ul
+        = form.fields_for :taggings, [Tagging.new], child_index: '${index}' do |tagging_f|
+          %ul
+            %li{ 'v-for': '(tagging, index) in article.taggings'}
+              = tagging_f.hidden_field :id, vue: true, 'v-model': 'tagging.id'
+              = tagging_f.select :tag_id, nil, {}, {vue: true, 'v-model': 'tagging.tag_id'} do
+                %option{'v-if': 'tagging.tag_id', ':value': 'tagging.tag_id'}
+                  {{findTag(tagging.tag_id).name}} (current)
+                %option{'v-for': 'tag in availableTags', ':value': 'tag.id'}
+                  {{tag.name}}
+              %label{'v-if': 'tagging.id'}
+                = tagging_f.check_box :_destroy, {vue: true, 'v-model': 'tagging._destroy'}, 1, nil
+                解除
+              %template{'v-else': true, style: 'display:inline-block;'}
+                %button{type: :button, '@click': 'article.taggings.splice(index, 1)'} 追加をやめる
+        %button{ type: 'button', '@click': 'article.taggings.push({ id: null, tag_id: null, _destroy: false })' } add
 
     .field
       = form.label :visibility

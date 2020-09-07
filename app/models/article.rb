@@ -8,6 +8,7 @@ class Article < ApplicationRecord
   enumerize :visibility, in: %i[public draft], default: :draft
 
   accepts_nested_attributes_for :comments, allow_destroy: true
+  accepts_nested_attributes_for :taggings, allow_destroy: true
 
   validates :title, presence: true
 end
