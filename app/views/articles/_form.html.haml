@@ -161,7 +161,7 @@
           .filed
             %direct-upload{ 'upload-url': rails_direct_uploads_url,
                             ':attachments': 'comment.images_attachments',
-                            '@upload': 'comment.images_attachments.push({ signed_id: $event.blob.signed_id })',
+                            '@upload': 'comment.addImage($event.blob)',
                             '@fail': '$set(comment, "hoge", $event)',
                              }
               %button{ type: :button } 新規画像
@@ -184,7 +184,7 @@
                   %template{ 'v-else': true }
                     -# direct-uploadを使えば、errorsが起きた時にimageが削除されることを防げるため、else節を導入して表示してやるといい感じ。
                     = comment_form.hidden_field :images, value: nil, multiple: true, vue: %i[id name value], ':value': 'attachment.signed_id'
-                    %button{ type: :button, '@click': 'comment.images_attachments.splice(attachment_index, 1)' } アップロードをやめる
+                    %button{ type: :button, '@click': 'comment.delImage(attachment.signed_id)' } アップロードをやめる
 
     = button_tag 'add comment', type: 'button', '@click': 'article.addComment()'
 

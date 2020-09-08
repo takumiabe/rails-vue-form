@@ -1,15 +1,17 @@
+import { Comment } from './comment';
 
 export class Article {
+  // properyにしてはいけない。vuejsが読めなくなる。
+  // name = null;
+
   constructor({ taggings, comments, ...attrs }) {
     Object.assign(this, attrs);
     this.taggings = taggings;
-    this.comments = comments;
+    this.comments = comments.map(x => new Comment(x));
   }
 
   addComment() {
-    this.comments.push(
-      { name: "", body: "", sort_key: 1, _destroy: null, images_attachments: [] }
-    );
+    this.comments.push(new Comment());
     this.updateSortKey();
   }
 
