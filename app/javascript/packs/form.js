@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el: '#form',
     components: { draggable, directUpload },
     data() {
-      return { allTags: [], article: { taggings: [], comments: [] } }
+      return JSON.parse(document.getElementById('form').dataset.init);
     },
     computed: {
       availableTags() {
@@ -66,6 +66,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-  const data = JSON.parse(document.getElementById('form').dataset.init);
-  Object.assign(form.$data, data);
 });
