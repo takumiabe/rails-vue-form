@@ -99,89 +99,79 @@
           = b.radio_button 'v-model': 'article.visibility'
           = b.text
 
-    -# 普通の Vue-Component
-    %draggable{ 'v-model': 'article.comments', '@end': 'updateSortKey' }
+    %comments{ 'v-model': 'article.comments', 'v-slot': '{ comment, comment_index }' }
+      -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
+      -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
+      -# child_index: コレ自体はRailsの機能だが、コイツを利用して、各input要素が v-for の comment_index を参照するようにセットアップする
+      -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
+      = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
 
-      -# 普通の v-for 表記 + v-bind表記
-      .comment.fields{ 'v-for': '(comment, comment_index) in article.comments', 'v-show': '!comment._destroy' }
+        .field
+          -# vue: Railsが内部で自動出力するカラムを、出力の最終段直前でv-bindに置換することで、vue.jsから扱えるようにする。
+          -#      具体的には、key="value" を v-bind:key="`value`"に置き換える。
+          -#      backquote-stringなのに注意。すなわちvalueに${x}記法が含まれていればvue.js側で評価される。
+          -#      fields_forのindex指定によって、for="article[comments_attributes][${comment_index}][name]"が入っているので、
+          -#      これが置換されて、v-bind:for="`article[comments_attributes][${comment_index}][name]`" となる。(backquote-stringであるのに注意！)
+          = comment_form.label :name, vue: :for
+          -#      ↑ ちなみに、forとidは一致していないといけない。故に、labelにはvue: :for を input等にはvue: :idを指定することになる
+          -#      (labelでinputを包むときはどちらでも良い)
 
-        -# [Comment.new]: 通常であれば要素が1つもなければformを出力しないで良いが
-        -#                vueから扱うなら、どのような状況でも1つだけ要素を出力させなければならない
-        -# child_index: コレ自体はRailsの機能だが、コイツを利用して、各input要素が v-for の comment_index を参照するようにセットアップする
-        -# wrapper: wrapperを外すのはお好み。無駄な構造を作りたくなければ外す。
-        = form.fields_for :comments, [Comment.new], child_index: '${comment_index}', wrapper: false do |comment_form|
+          -# vue: nameを含むことで、Railsが受け取るparamsに${content_index}を紛れ込ませ、Vuejsの力で動的に展開する
+          = comment_form.text_field :name, vue: %i[id name], 'v-model': 'comment.name'
 
-          .field
-            -# vue: Railsが内部で自動出力するカラムを、出力の最終段直前でv-bindに置換することで、vue.jsから扱えるようにする。
-            -#      具体的には、key="value" を v-bind:key="`value`"に置き換える。
-            -#      backquote-stringなのに注意。すなわちvalueに${x}記法が含まれていればvue.js側で評価される。
-            -#      fields_forのindex指定によって、for="article[comments_attributes][${comment_index}][name]"が入っているので、
-            -#      これが置換されて、v-bind:for="`article[comments_attributes][${comment_index}][name]`" となる。(backquote-stringであるのに注意！)
-            = comment_form.label :name, vue: :for
-            -#      ↑ ちなみに、forとidは一致していないといけない。故に、labelにはvue: :for を input等にはvue: :idを指定することになる
-            -#      (labelでinputを包むときはどちらでも良い)
+        .field
+          -# 多分 Railsが自動生成するような対象はid / name / value / forだけでしょ？という予断から、vue: trueを渡すとこれらを一括して対象にすることができるようにした。
+          -# もしかしたらいまいちかもしれない。
+          = comment_form.label :body, vue: true
 
-            -# vue: nameを含むことで、Railsが受け取るparamsに${content_index}を紛れ込ませ、Vuejsの力で動的に展開する
-            = comment_form.text_field :name, vue: %i[id name], 'v-model': 'comment.name'
+          -# vue: だからRailsのメカニズムを利用しないオプション(この例ではstyle)であれば、単に ':style'とすれば良い。
+          -#      問題となるのは、概ね id / name / value / for だけだろう。
+          = comment_form.text_area :body, vue: true, 'v-model': 'comment.body'
+        -# nestedな状態でのradio_button
+        .field
+          = comment_form.label :visibility, vue: true
+          -# include_hidden: falseにしておかないと、そちらで生成されたinputにはvue: オプションが無いためうまく動かない
+          = comment_form.collection_radio_buttons :visibility, Comment.visibility.options, :last, :first, include_hidden: false do |b|
+            = b.radio_button vue: true, 'v-model': 'comment.visibility'
+            -# forとidの対応がつく。
+            = b.label vue: true
 
-          .field
-            -# 多分 Railsが自動生成するような対象はid / name / value / forだけでしょ？という予断から、vue: trueを渡すとこれらを一括して対象にすることができるようにした。
-            -# もしかしたらいまいちかもしれない。
-            = comment_form.label :body, vue: true
+        .filed
+          = comment_form.label :sort_key, vue: true
+          = comment_form.text_field :sort_key, vue: true, ':value': 'comment.sort_key'
 
-            -# vue: だからRailsのメカニズムを利用しないオプション(この例ではstyle)であれば、単に ':style'とすれば良い。
-            -#      問題となるのは、概ね id / name / value / for だけだろう。
-            = comment_form.text_area :body, vue: true, 'v-model': 'comment.body'
-          -# nestedな状態でのradio_button
-          .field
-            = comment_form.label :visibility, vue: true
-            -# include_hidden: falseにしておかないと、そちらで生成されたinputにはvue: オプションが無いためうまく動かない
-            = comment_form.collection_radio_buttons :visibility, Comment.visibility.options, :last, :first, include_hidden: false do |b|
-              = b.radio_button vue: true, 'v-model': 'comment.visibility'
-              -# forとidの対応がつく。
-              = b.label vue: true
+        .field
+          -# allow_destroy: trueを動かすためのいつもの組み合わせ。
+          = comment_form.hidden_field :id, vue: %i[id name], 'v-model': 'comment.id'
+          = comment_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'comment._destroy'
 
-          .filed
-            = comment_form.label :sort_key, vue: true
-            = comment_form.text_field :sort_key, vue: true, ':value': 'comment.sort_key'
+        .filed
+          %direct-upload{ 'upload-url': rails_direct_uploads_url,
+                          ':attachments': 'comment.images_attachments',
+                          '@upload': 'comment.images_attachments.push({ signed_id: $event.blob.signed_id })',
+                          '@fail': '$set(comment, "hoge", $event)',
+                          }
+            %button{ type: :button } 新規画像
 
-          .field
-            -# allow_destroy: trueを動かすためのいつもの組み合わせ。
-            = comment_form.hidden_field :id, vue: %i[id name], 'v-model': 'comment.id'
-            = comment_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'comment._destroy'
+          %ul{ style: 'display: flex; flex-flow: raw' }
+            = comment_form.fields_for :images_attachments, [ActiveStorage::Attachment.new], child_index: '${attachment_index}', wrapper: false do |image_form|
+              %li{ 'v-for': "(attachment, attachment_index) in comment.images_attachments", ':key': "attachment_index",
+                style: 'display: flex-item; list-style: none;'}
+                %img{ width: '100px', ':src': rails_service_blob_path(signed_id: 'XXXXXXXX', filename: 'abc').gsub('XXXXXXXX', '${attachment.signed_id}').yield_self{|x| "\`#{x}\`"} }
+                %br
 
-            -# Railsが自動生成する値を使わないなら、vue:の指定は不要
-            = button_tag '削除', type: :button, '@click': 'delComment(comment)'
-
-          .filed
-            %direct-upload{ 'upload-url': rails_direct_uploads_url,
-                            ':attachments': 'comment.images_attachments',
-                            '@upload': 'comment.images_attachments.push({ signed_id: $event.blob.signed_id })',
-                            '@fail': '$set(comment, "hoge", $event)',
-                             }
-              %button{ type: :button } 新規画像
-
-            %ul{ style: 'display: flex; flex-flow: raw' }
-              = comment_form.fields_for :images_attachments, [ActiveStorage::Attachment.new], child_index: '${attachment_index}', wrapper: false do |image_form|
-                %li{ 'v-for': "(attachment, attachment_index) in comment.images_attachments", ':key': "attachment_index",
-                  style: 'display: flex-item; list-style: none;'}
-                  %img{ width: '100px', ':src': rails_service_blob_path(signed_id: 'XXXXXXXX', filename: 'abc').gsub('XXXXXXXX', '${attachment.signed_id}').yield_self{|x| "\`#{x}\`"} }
-                  %br
-
-                  %template{ 'v-if': "attachment.id" }
-                    = image_form.hidden_field :id, vue: %i[id name], 'v-model': 'attachment.id'
-                    %label
-                      -# 第4引数をnilにすることで、railsのcheckbox hack用のhidden_tagが出力されるのを止める
-                      = image_form.check_box :_destroy, { vue: %i[id name value], 'v-model': 'attachment._destroy' }, 1, nil
-                      消す
-                    -# その上でvueらしい感じにしつつ、Railsが扱う値である1 / 0を明示的に送る
-                    = image_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'attachment._destroy ? 1 : 0'
-                  %template{ 'v-else': true }
-                    -# direct-uploadを使えば、errorsが起きた時にimageが削除されることを防げるため、else節を導入して表示してやるといい感じ。
-                    = comment_form.hidden_field :images, value: nil, multiple: true, vue: %i[id name value], ':value': 'attachment.signed_id'
-                    %button{ type: :button, '@click': 'comment.images_attachments.splice(attachment_index, 1)' } アップロードをやめる
-
-    = button_tag 'add comment', type: 'button', '@click': 'addComment'
+                %template{ 'v-if': "attachment.id" }
+                  = image_form.hidden_field :id, vue: %i[id name], 'v-model': 'attachment.id'
+                  %label
+                    -# 第4引数をnilにすることで、railsのcheckbox hack用のhidden_tagが出力されるのを止める
+                    = image_form.check_box :_destroy, { vue: %i[id name value], 'v-model': 'attachment._destroy' }, 1, nil
+                    消す
+                  -# その上でvueらしい感じにしつつ、Railsが扱う値である1 / 0を明示的に送る
+                  = image_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'attachment._destroy ? 1 : 0'
+                %template{ 'v-else': true }
+                  -# direct-uploadを使えば、errorsが起きた時にimageが削除されることを防げるため、else節を導入して表示してやるといい感じ。
+                  = comment_form.hidden_field :images, value: nil, multiple: true, vue: %i[id name value], ':value': 'attachment.signed_id'
+                  %button{ type: :button, '@click': 'comment.images_attachments.splice(attachment_index, 1)' } アップロードをやめる
 
     .actions
       = form.submit
