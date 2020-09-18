@@ -28,14 +28,9 @@ export default {
       type: String,
       required: true
     },
-    attachments: {
-      type: Array,
-      required: true,
-      default: ()=> []
-    },
     multiple: {
       type: Boolean,
-      default: true,
+      default: false,
     }
   },
   data() {
@@ -43,11 +38,6 @@ export default {
       isDragging: false,
       progress: 0,
       uploads: [],
-    }
-  },
-  computed: {
-    uploaded() {
-      return this.attachments.filter(file => !file.id && !file._destroy);
     }
   },
   methods: {

@@ -156,6 +156,7 @@
           .filed
             %direct-upload{ 'upload-url': rails_direct_uploads_url,
                             ':attachments': 'comment.images_attachments',
+                            multiple: true,
                             '@upload': 'comment.images_attachments.push({ signed_id: $event.blob.signed_id })',
                             '@fail': '$set(comment, "hoge", $event)',
                              }
