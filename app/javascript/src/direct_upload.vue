@@ -20,7 +20,7 @@
 <script>
 // 参考…
 // https://gist.github.com/zealot128/3f75046ea7efc4489f03e4b71244d0f8
-import { DirectUpload } from 'activestorage'
+import { DirectUpload } from '@rails/activestorage'
 
 export default {
   props: {

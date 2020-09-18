@@ -1,8 +1,4 @@
-const { dev_server: devServer } = require('@rails/webpacker').config
-
-const isProduction = process.env.NODE_ENV === 'production'
-const inDevServer = process.argv.find(v => v.includes('webpack-dev-server'))
-const extractCSS = !(inDevServer && (devServer && devServer.hmr)) || isProduction
+const { dev_server: devServer, extract_css: extractCSS } = require('@rails/webpacker').config
 
 module.exports = {
   test: /\.vue(\.erb)?$/,
