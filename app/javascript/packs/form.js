@@ -63,7 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       findTag(tag_id) {
         return this.allTags.find(x => x.id == tag_id);
-      }
+      },
+      setImage(signed_id) {
+        this.$set(this.article.image_attachment, 'signed_id', signed_id);
+        this.$set(this.article.image_attachment, '_destroy', false);
+      },
+      delImage() {
+        if (this.article.image_attachment.id) {
+          this.$set(this.article.image_attachment, 'signed_id', null);
+          this.$set(this.article.image_attachment, '_destroy', true);
+        } else {
+          this.$set(this.article, 'image_attachment', {});
+        }
+      },
     }
   });
 });

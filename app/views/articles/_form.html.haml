@@ -27,9 +27,13 @@
         except: %i[created_at updated_at],
         only: %i[id tag_id],
         methods: %i[_destroy],
-      }
+      },
+      image_attachment: {
+        only: %i[id], methods: %i[signed_id _destroy],
+      },
     }
   )
+  initialData['article']['image_attachment'] ||= {}
   initialData['article']['comments'].sort_by!{|c| c['sort_key'] }
   initialData['article']['comments'].each do |comm|
     comm['images_attachments']&.each do |img|
@@ -98,6 +102,21 @@
           -# collection_radio_buttonsで生成されるinput要素にhtmlオプションを与えるならこうするしかない。(vuejs関係なく)
           = b.radio_button 'v-model': 'article.visibility'
           = b.text
+    .filed
+      %template{ 'v-if': 'article.image_attachment.signed_id' }
+        = form.hidden_field :image, vue: %i[id name], 'v-model': 'article.image_attachment.signed_id'
+      %template{ 'v-if': 'article.image_attachment._destroy' }
+        = form.fields_for :image_attachment, ActiveStorage::Attachment.new do |image_form|
+          = image_form.hidden_field :id, vue: %i[id name], 'v-model': 'article.image_attachment.id'
+          = image_form.hidden_field :_destroy, vue: %i[id name], 'v-model': 'article.image_attachment._destroy ? 1 : 0'
+
+      %template{ 'v-if': 'article.image_attachment.signed_id && !article.image_attachment._destroy' }
+        %img{ width: '100px', ':src': rails_service_blob_path(signed_id: 'XXXXXXXX', filename: 'abc').gsub('XXXXXXXX', '${article.image_attachment.signed_id}').yield_self{|x| "\`#{x}\`"} }
+
+      %direct-upload{ 'upload-url': rails_direct_uploads_url, '@upload': 'setImage($event.blob.signed_id)' }
+        %button{ type: :button } アップロード
+      %template{ 'v-if': "article.image_attachment.signed_id" }
+        %button{ type: :button, '@click': 'delImage' } 消す
 
     -# 普通の Vue-Component
     %draggable{ 'v-model': 'article.comments', '@end': 'updateSortKey' }
