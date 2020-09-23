@@ -51,7 +51,7 @@ export default {
       this.progress = 0
       upload.create((error, blob) => {
         if (error) {
-          this.$emit('fail', { file, error, upload })
+          this.$emit('fail', { file, error })
         } else {
           this.uploads = this.uploads.filter(payload => payload.file.filename !== file.filename)
           this.$emit('upload', { file, blob })

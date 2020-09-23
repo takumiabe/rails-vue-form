@@ -81,6 +81,13 @@ class ArticlesController < ApplicationController
             :id, :_destroy
           ],
         ]
-      )
+      ).tap do |permitted|
+        # 削除のための対応。空文字が送られてきたら ActiveSupport::MessageVerifier::InvalidSignature が出てしまうので、nilに置き換える
+        # Rails6ではnilをうけるとpurge等してくれる。
+        permitted[:image] = permitted[:image].presence
+        permitted[:comments_attributes].each do |_, comm|
+          comm[:images].map!(&:presence)
+        end
+      end
     end
 end
