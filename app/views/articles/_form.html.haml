@@ -2,30 +2,10 @@
   = javascript_pack_tag 'form'
 
 :ruby
-  # Vue.jsのdataの初期化用にjsonをstringifyして与える。本来はviewにベタ書きしなほうが良いかもしれない。
-  initialData = @article.as_json(
-    root: true,
-    except: %i[created_at updated_at],
-    methods: %i[image],
-    include: {
-      comments: {
-        except: %i[created_at updated_at],
-        methods: %i[images _destroy],
-        include: {
-          images: { methods: :signed_id, only: :signed_id }
-        }
-      },
-      taggings: {
-        except: %i[created_at updated_at],
-        only: %i[id tag_id],
-        methods: %i[_destroy],
-      },
-      image: { methods: :signed_id, only: :signed_id },
-    }
-  )
-  initialData['article']['comments'].sort_by!{|c| c['sort_key'] }
-  initialData['allTags'] = Tag.all.as_json(only: %i[id name])
-  initialData = initialData.to_json
+  initialData = {
+    article: ArticleBlueprint.render_as_json(@article),
+    allTags: TagBlueprint.render_as_json(Tag.all),
+  }.to_json
 
 :css
   .comment { border: 1px solid gray; }
