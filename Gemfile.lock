@@ -44,6 +44,7 @@ GEM
       tzinfo (~> 1.1)
     arel (9.0.0)
     bindex (0.5.0)
+    blueprinter (0.25.1)
     bootsnap (1.4.1)
       msgpack (~> 1.0)
     builder (3.2.3)
@@ -178,6 +179,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  blueprinter (~> 0.25.0)
   bootsnap (>= 1.1.0)
   byebug
   enumerize (~> 2.3.1)

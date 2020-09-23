@@ -30,6 +30,12 @@ gem 'bootsnap', '>= 1.1.0', require: false
 
 gem 'pry-rails'
 
+# ActiveModelSerializerも、jbuilderも嫌。
+# JSON:APIも別に要らないので、fast_jsonapiとかも嫌。
+# jbは手頃だけど、手続き的すぎるから嫌…ってことで
+# 試しに使ってみる
+gem 'blueprinter', '~> 0.25.0'
+
 group :development, :test do
   # Call 'byebug' anywhere in the code to stop execution and get a debugger console
   gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]

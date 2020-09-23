@@ -30,6 +30,8 @@ module RailsVueForm
     config.paths.add Rails.root.join('app', 'lib', 'patch').to_s, autoload: true
     config.autoload_paths << Rails.root.join('app', 'lib', 'patch').to_s
 
+    config.paths.add Rails.root.join('app', 'serializers').to_s, autoload: true
+
     # Don't generate system test files.
     config.generators.system_tests = nil
     config.active_job.queue_adapter = :inline
